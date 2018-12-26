@@ -1,2 +1,2 @@
 # XGBoost
-XGBoost classifier for news20group Data set.
+XGBoost classifier for 20 newsgroup Data set.
