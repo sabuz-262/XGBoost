@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#PBS -N testfunction_optimize
+#PBS -l nodes=1:ppn=2,mem=2gb,walltime=5:00:00
+
+#PBS -e /home/ehoag/summer17/MF_BaMLOGO/testfunction_error.txt
+#PBS -o /home/ehoag/summer17/MF_BaMLOGO/testfunction_out.txt
+#PBS -M eshoag2@illinois.edu
+
+#PBS -q doppa
+
+module load python/3.6.1
+
+export PYTHON_PATH='/share/apps/anaconda3-4.3.1/bin'
+export PATH=$PYTHON_PATH:$PATH
+
+cd /data/doppa/users/ehoag/MF_BaMLOGO/executables
+
+# Needs:
+#     ~ 650mb per BaMLOGO or MF-BaMLOGO test
+#     > 1 hour for Hartmann-6D per run
+ALGORITHMS=(
+  'LOGO'
+  'BaMLOGO'
+  'MF-BaMLOGO'
+)
+FUNCTIONS=(
+  'Hosaki-2D'
+  # 'Rosenbrock-2D'
+  # 'Hartmann-3D'
+  # 'Hartmann-6D'
+  # 'Park1-4D'
+  # 'Park2-4D'
+  # 'CurrinExponential-2D'
+  # 'BadCurrinExponential-2D'
+  # 'Borehole-8D'
+)
+
+PID_LIST=()
+
+for ALG in ${ALGORITHMS[@]}; do
+  for FN in ${FUNCTIONS[@]}; do
+
+    OUT_PATH="/data/doppa/users/ehoag/MF_BaMLOGO/data/${ALG}_${FN}.json"
+
+    if [ ALG == 'LOGO' ]; then
+      NUM_RUNS=1
+    else
+      NUM_RUNS=5
+    fi
+
+    python run_experiment.py -f $FN -a $ALG -r 100 -n $NUM_RUNS -o $OUT_PATH -v 2 & PID=$!
+
+    PID_LIST+=" $PID"
+  done
+done
+
+trap "kill $PID_LIST" SIGINT
+wait $PID_LIST
